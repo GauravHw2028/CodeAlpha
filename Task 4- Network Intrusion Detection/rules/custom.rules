@@ -1,0 +1,44 @@
+# Custom rules for Suricata Network Intrusion Detection System
+
+# ICMP Ping Detection (Potential network scanning)
+alert icmp any any -> $HOME_NET any (msg:"ICMP Ping Detected"; sid:1000001; rev:1;)
+
+# SSH Brute Force Detection
+alert tcp any any -> $HOME_NET 22 (msg:"Potential SSH Brute Force Attack"; flow:to_server; threshold:type threshold, track by_src, count 5, seconds 60; sid:1000002; rev:1;)
+
+# Telnet Access Detection
+alert tcp any any -> $HOME_NET 23 (msg:"Telnet Connection Attempt"; flow:to_server; sid:1000003; rev:1;)
+
+# SQL Injection Detection
+alert http any any -> $HOME_NET any (msg:"SQL Injection Attempt"; content:"select"; nocase; http_uri; content:"from"; nocase; http_uri; distance:0; sid:1000004; rev:1;)
+alert http any any -> $HOME_NET any (msg:"SQL Injection Attempt"; content:"union"; nocase; http_uri; content:"select"; nocase; http_uri; distance:0; sid:1000005; rev:1;)
+alert http any any -> $HOME_NET any (msg:"SQL Injection Attempt"; content:"'--"; nocase; http_uri; sid:1000006; rev:1;)
+
+# Cross-Site Scripting (XSS) Detection
+alert http any any -> $HOME_NET any (msg:"XSS Attempt"; content:"<script>"; nocase; http_uri; sid:1000007; rev:1;)
+
+# Directory Traversal Detection
+alert http any any -> $HOME_NET any (msg:"Directory Traversal Attempt"; content:"../"; http_uri; sid:1000008; rev:1;)
+alert http any any -> $HOME_NET any (msg:"Directory Traversal Attempt"; content:"..%2f"; nocase; http_uri; sid:1000009; rev:1;)
+
+# Suspicious User-Agent Strings
+alert http any any -> $HOME_NET any (msg:"Suspicious User-Agent (Nikto)"; flow:to_server,established; content:"Nikto"; http_header; sid:1000010; rev:1;)
+alert http any any -> $HOME_NET any (msg:"Suspicious User-Agent (Dirbuster)"; flow:to_server,established; content:"DirBuster"; http_header; sid:1000011; rev:1;)
+
+# Executable File Download Detection
+alert http any any -> $HOME_NET any (msg:"Executable Download"; flow:to_client,established; content:"application/x-dosexec"; http_header; sid:1000012; rev:1;)
+
+# Sensitive Data in URL Detection
+alert http any any -> $HOME_NET any (msg:"Password in URL"; flow:to_server,established; content:"password="; http_uri; sid:1000013; rev:1;)
+
+# Outbound Connections to Known Malicious IPs (example IPs)
+alert ip any any -> [192.168.1.100,192.168.1.101] any (msg:"Connection to Known Malicious IP"; sid:1000014; rev:1;)
+
+# DNS Tunneling Detection
+alert udp any any -> $HOME_NET 53 (msg:"Potential DNS Tunneling"; content:"|00 01 00 00|"; offset:4; depth:4; content:"|00 01 00 01|"; distance:4; within:4; threshold:type threshold, track by_src, count 10, seconds 60; sid:1000015; rev:1;)
+
+# Large ICMP Packets (Potential Covert Channel)
+alert icmp any any -> $HOME_NET any (msg:"Large ICMP Packet - Potential Covert Channel"; dsize:>128; sid:1000016; rev:1;)
+
+# TLS/SSL with Unusual Ports
+alert tls !$HOME_NET any -> $HOME_NET !443 (msg:"TLS on Unusual Port"; flow:to_server,established; sid:1000017; rev:1;) 

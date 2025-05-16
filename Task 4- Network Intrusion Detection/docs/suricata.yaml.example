@@ -1,0 +1,107 @@
+# Example Suricata configuration file
+# This is a simplified version - the actual suricata.yaml is much more extensive
+
+%YAML 1.1
+---
+
+# Suricata version: 6.0.x configuration file
+
+vars:
+  # Define the home networks - needs to be customized for your environment
+  address-groups:
+    HOME_NET: "[192.168.0.0/16,10.0.0.0/8,172.16.0.0/12]"
+    EXTERNAL_NET: "!$HOME_NET"
+    HTTP_SERVERS: "$HOME_NET"
+    SMTP_SERVERS: "$HOME_NET"
+    SQL_SERVERS: "$HOME_NET"
+    DNS_SERVERS: "$HOME_NET"
+    TELNET_SERVERS: "$HOME_NET"
+    AIM_SERVERS: "$EXTERNAL_NET"
+
+  # Ports
+  port-groups:
+    HTTP_PORTS: "80"
+    SHELLCODE_PORTS: "!80"
+    ORACLE_PORTS: 1521
+    SSH_PORTS: 22
+    DNP3_PORTS: 20000
+
+# Capture settings for your interface - IMPORTANT: change to match your setup
+af-packet:
+  - interface: eth0  # CHANGE THIS TO YOUR INTERFACE (e.g., eth0, ens33, wlan0)
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+    use-mmap: yes
+    tpacket-v3: yes
+
+# Configure detection engine
+detect-engine:
+  - profile: medium
+  - sgh-mpm-context: auto
+  - inspection-recursion-limit: 3000
+
+# Rules configuration
+default-rule-path: /etc/suricata/rules
+rule-files:
+  - suricata.rules
+  - custom.rules  # Our custom rules file
+
+# Configure outputs
+outputs:
+  # Fast alert log
+  - fast:
+      enabled: yes
+      filename: fast.log
+      append: yes
+
+  # Detailed JSON log
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert
+        - http
+        - dns
+        - tls
+        - files
+        - ssh
+        - stats
+
+# Configure logging
+logging:
+  default-log-level: info
+  outputs:
+    - console:
+        enabled: yes
+    - file:
+        enabled: yes
+        filename: suricata.log
+
+# Application Layer Protocols
+app-layer:
+  protocols:
+    tls:
+      enabled: yes
+    http:
+      enabled: yes
+    dns:
+      enabled: yes
+    ssh:
+      enabled: yes
+
+# Advanced settings
+run-as:
+  user: suricata
+  group: suricata
+
+# Host-specific settings - tune for your hardware
+threading:
+  set-cpu-affinity: yes
+  detect-thread-ratio: 1.5
+
+# Memory configuration - adjust for your system
+# memory is in MB
+default-packet-size: 1514
+max-pending-packets: 1024 
